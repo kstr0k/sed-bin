@@ -60,7 +60,7 @@ __sed_cached_make() {  # args: script
   bfile=$_R4_cachename/s1.bin
   bin=$bfile  # counts on this function NOT being subshell-ed
 
-  if ! [ -r "$sfile" ] || ! { printf '%s' "$1" | cmp >/dev/null 2>&1 "$sfile" -; }; then
+  if ! [ -r "$sfile" ] || ! [ -r "$bfile" ] || ! { printf '%s' "$1" | cmp >/dev/null 2>&1 "$sfile" -; }; then
     printf '%s' "$1" >"$sfile"  # save script
     __sed_default_make "$1"     # compile
     mv "$oldbin" "$bin"         # save binary
