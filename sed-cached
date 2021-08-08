@@ -1,0 +1,84 @@
+#!/bin/sh
+set -ue
+
+SED_LIBMODE=:
+. "${0%/*}"/sed
+
+: "${SED_CACHE_DIR:=$HOME/.cache/sed-bin}"
+
+# _r4 (return-for) functions save results in _R4_ globals instead of stdout
+# avoids forks (pipes + subshells), extra steps when capturing -- $() trims \n
+
+# fchar functions: find filename-compatible char in arg
+__fchar1_r4() {  # results: (_R4_$n$function): 1st-fchar rest
+  _R4_2fchar1=$1'_'  # add guard fchar
+  _R4_2fchar1=${_R4_2fchar1#*[[:alnum:]_.!%+-]}  # := $1-after-1st-fchar
+  _R4_2fchar1=${_R4_2fchar1%_}  # rm guard fchar
+  _R4_1fchar1=${1%"$_R4_2fchar1"}  # := $1-upto-1st-fchar-or-end
+  _R4_1fchar1=${_R4_1fchar1#"${_R4_1fchar1%?}"}  # := last char of above
+  _R4_1fchar1=${_R4_1fchar1%[![:alnum:]_.!%+-]}  # ... or empty if invalid
+}
+__fcharn_r4() {  # results: (_R4_$n$function): last-fchar rest
+  # copy/paste fchar1, swap '#' and '%'
+  _R4_2fcharn=_$1
+  _R4_2fcharn=${_R4_2fcharn%[[:alnum:]_.!%+-]*}
+  _R4_2fcharn=${_R4_2fcharn#_}
+  _R4_1fcharn=${1#"$_R4_2fcharn"}
+  _R4_1fcharn=${_R4_1fcharn%"${_R4_1fcharn#?}"}
+  _R4_1fcharn=${_R4_1fcharn#[![:alnum:]_.!%+-]}
+}
+
+# hash function that should be fast to compute in pure shell
+# takes some filename-compatible chars from script start, then from end
+__cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
+  local n s; local ndef=6
+  [ ${#1} -lt 100 ] || ndef=4
+  [ ${#1} -lt 500 ] || ndef=2
+  _R4_cachename=$SED_CACHE_DIR/exe/${#1}/c
+  n=$ndef s=$1
+  # fetch fchars from arg's start
+  while [ "$n" -gt 0 ]; do
+    n=$(( n - 1 ))
+    __fchar1_r4 "$s"
+    [ "$s" != "$_R4_2fchar1" ] || break
+    s=$_R4_2fchar1
+    _R4_cachename=$_R4_cachename$_R4_1fchar1
+  done
+  # fetch fchars from arg's end
+  n=$ndef s=$1 _R4_cachename=$_R4_cachename'`'
+  while [ "$n" -gt 0 ]; do
+    n=$(( n - 1 ))
+    __fcharn_r4 "$s"
+    [ "$s" != "$_R4_2fcharn" ] || break
+    s=$_R4_2fcharn
+    _R4_cachename=$_R4_cachename$_R4_1fcharn
+  done
+}
+
+# build new binary, or use cached one if available
+__sed_cached_make() {  # args: script
+  __cachename_r4 "$1"
+  [ -d "$_R4_cachename" ] || mkdir -p "$_R4_cachename"  # TODO: lock etc
+  local sfile bfile oldbin="$bin"
+  sfile=$_R4_cachename/s1.sed  # TODO; counter
+  bfile=$_R4_cachename/s1.bin
+  bin=$bfile  # counts on this function NOT being subshell-ed
+
+  if ! [ -r "$sfile" ] || ! { printf '%s' "$1" | cmp >/dev/null 2>&1 "$sfile" -; }; then
+    printf '%s' "$1" >"$sfile"  # save script
+    __sed_default_make "$1"     # compile
+    mv "$oldbin" "$bin"         # save binary
+  fi
+}
+
+# replace _make hook, invoke `sed` script
+__sed_make() { __sed_cached_make "$@"; }
+__sed_parse_args "$@"; exit $?
+
+
+# tests -- comment out execution above
+for tst in '' '/' '/q' 's/a/b/' 'xy' '/qx' "$@"; do
+  __fchar1_r4 "$tst"; printf '1 |%s|\n  |%s|\n  |%s|\n' "$tst" "$_R4_1fchar1" "$_R4_2fchar1"
+  __fcharn_r4 "$tst"; printf 'n |%s|\n  |%s|\n  |%s|\n' "$tst" "$_R4_1fcharn" "$_R4_2fcharn"
+  __cachename_r4 "$tst"; printf 'c |%s|\n  |%s|\n' "$tst" "$_R4_cachename"
+done
