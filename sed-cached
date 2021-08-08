@@ -1,10 +1,4 @@
 #!/bin/sh
-set -ue
-
-SED_LIBMODE=:
-. "${0%/*}"/sed
-
-: "${SED_CACHE_DIR:=$HOME/.cache/sed-bin}"
 
 # _r4 (return-for) functions save results in _R4_ globals instead of stdout
 # avoids forks (pipes + subshells), extra steps when capturing -- $() trims \n
@@ -74,13 +68,27 @@ __sed_cached_make() {  # args: script
 }
 
 # replace _make hook, invoke `sed` script
-__sed_make() { __sed_cached_make "$@"; }
-__sed_parse_args "$@"; exit $?
+__sed_cached_main() {
+  : "${SED_CACHE_DIR:=$HOME/.cache/sed-bin}"
+  __sed_make() { __sed_cached_make "$@"; }
+  __sed_parse_args "$@"; exit $?
+}
 
-
-# tests -- comment out execution above
+__sed_cached_tests() {
 for tst in '' '/' '/q' 's/a/b/' 'xy' '/qx' "$@"; do
   __fchar1_r4 "$tst"; printf '1 |%s|\n  |%s|\n  |%s|\n' "$tst" "$_R4_1fchar1" "$_R4_2fchar1"
   __fcharn_r4 "$tst"; printf 'n |%s|\n  |%s|\n  |%s|\n' "$tst" "$_R4_1fcharn" "$_R4_2fcharn"
   __cachename_r4 "$tst"; printf 'c |%s|\n  |%s|\n' "$tst" "$_R4_cachename"
 done
+}
+
+if [ -z "${SED_LIBMODE:-}" ]; then
+  set -ue
+  SED_LIBMODE=:
+  : "${SED_DIR:=${0%/*}/}"
+  . "$SED_DIR"/sed
+  __sed_cached_main "$@"
+fi
+
+## benchmark
+#export HFCNT="$(seq 1 10)"; hyperfine --export-markdown /tmp/sed-bin.md -w2 -L sed /S/sed-bin/sed,/S/sed-bin/sed-cached,'busybox sh /S/sed-bin/sed-cached',sed 'for i in $HFCNT; do {sed} "s/:/_/g;s/a/b/g" /etc/passwd; done'
