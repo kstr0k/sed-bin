@@ -40,7 +40,7 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   while [ "$n" -gt 0 ]; do
     n=$(( n - 1 ))
     __fchar1_r4 "$s"
-    [ "$s" != "$_R4_2fchar1" ] || break
+    [ "$_R4_1fchar1" ] || break
     s=$_R4_2fchar1
     _R4_cachename=$_R4_cachename$_R4_1fchar1
   done
@@ -49,7 +49,7 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   while [ "$n" -gt 0 ]; do
     n=$(( n - 1 ))
     __fcharn_r4 "$s"
-    [ "$s" != "$_R4_2fcharn" ] || break
+    [ "$_R4_1fcharn" ] || break
     s=$_R4_2fcharn
     _R4_cachename=$_R4_cachename$_R4_1fcharn
   done
