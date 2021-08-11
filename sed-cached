@@ -82,11 +82,17 @@ for tst in '' '/' '/q' 's/a/b/' 'xy' '/qx' "$@"; do
 done
 }
 
+if [ -z "${SED_DIR:-}" ]; then
+  SED_DIR=$0
+  case "$SED_DIR" in
+    /*) ;;
+    *) SED_DIR=$PWD/$0 ;;
+  esac
+  SED_DIR=${SED_DIR%/*}/
+fi
 if [ -z "${SED_LIBMODE:-}" ]; then
   set -ue
-  SED_LIBMODE=:
-  : "${SED_DIR:=${0%/*}/}"
-  . "$SED_DIR"/sed
+  SED_LIBMODE=: . "$SED_DIR"/sed
   __sed_cached_parse_args "$@"
 fi
 
