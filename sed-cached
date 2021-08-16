@@ -61,11 +61,11 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
   _R4_cachename=$_R4_chunk_enc
 
-  # fetch 8 16char-chunks @arg's end
-  if s=$q7 && [ ${#1} -gt ${#s} ]; then  # truncate
+  # fetch some 16char-chunks @arg's tail
+  if s=$q6 && [ ${#1} -gt ${#s} ]; then  # truncate
     s=${1%$s}; set -- "${1##"$s"}"
   fi
-  i=8; while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
+  i=4; while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
     i=$(( i - 1 ))
     if s=$q4 && [ ${#1} -gt ${#s} ]; then
       s=${1#$s}; set -- "${1%%"$s"}" "$s"
