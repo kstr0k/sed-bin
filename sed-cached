@@ -67,8 +67,8 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   i=8; while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
     i=$(( i - 1 ))
     if [ ${#1} -gt 16 ]; then
-      s=${1%$q4}  # rest
-      set -- "${1##"$s"}" "$s"
+      s=${1#$q4}  # rest
+      set -- "${1%%"$s"}" "$s"
     fi
     __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
     _R4_cachename=$_R4_chunk_enc$_R4_cachename
