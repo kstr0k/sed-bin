@@ -54,7 +54,7 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   # fetch 1 16char-chunk @arg's start
   if [ ${#1} -gt 16 ]; then
     s=${1#$q4}  # rest
-    set -- "${1%"$s"}" "$s"  # $1=chunk (will be shifted away), $2=rest
+    set -- "${1%%"$s"}" "$s"  # $1=chunk (will be shifted away), $2=rest
   # else $1=chunk, remaining=''
   fi
   __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
@@ -62,13 +62,13 @@ __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   # fetch 8 16char-chunks @arg's end
   if [ ${#1} -gt 128 ]; then  # truncate
     s=${1%$q7}
-    set -- "${1#"$s"}"
+    set -- "${1##"$s"}"
   fi
   i=8; while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
     i=$(( i - 1 ))
     if [ ${#1} -gt 16 ]; then
       s=${1%$q4}  # rest
-      set -- "${1#"$s"}" "$s"
+      set -- "${1##"$s"}" "$s"
     fi
     __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
     _R4_cachename=$_R4_chunk_enc$_R4_cachename
