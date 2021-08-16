@@ -123,7 +123,12 @@ fi
 #SED_LIBMODE=:; SED_DIR=/S/sed-bin; . "$SED_DIR"/sed; . "$SED_DIR"/sed-cached; (__sed_cached_parse_args 's/:/_/g' /etc/passwd)
 
 ## benchmark: normal mode
-#seds=/S/sed-bin/sed,/S/sed-bin/sed-cached,'busybox sh /S/sed-bin/sed-cached',sed; bm='for i in $HFCNT; do {sed} "s/:/_/g;s/a/b/g" /etc/passwd; done'; HFCNT="$(seq 1 10)" hyperfine -w2 -L sed "$seds" "$bm"
+# alias hyfr='hyperfine -M 40'
+# alias hyfs='hyperfine -r 2 --show-output'  # check correctness
+#seds=/S/sed-bin/sed,/S/sed-bin/sed-cached,'busybox sh /S/sed-bin/sed-cached',sed; bm='for i in $HFCNT; do {sed} "s/:/_/g;s/a/b/g" /etc/passwd; done'; HFCNT="$(seq 1 10)" hyfr -w2 -L sed "$seds" "$bm"
 
 ## benchmark: library mode
-#export SED_DIR=/S/sed-bin/; seds="$SED_DIR"/sed-cached,'busybox sh "$SED_DIR"/sed-cached','(__sed_cached_main "$@"); :',sed; bm='SED_LIBMODE=:; . "$SED_DIR"/sed; . "$SED_DIR"/sed-cached; set -- "s/:/_/g;s/a/b/g" /etc/passwd; for i in $HFCNT; do {sed} "$@"; done'; HFCNT="$(seq 1 30)" hyperfine -w2 -L sed "$seds" "$bm"
+#export SED_DIR=/S/sed-bin/; seds="$SED_DIR"/sed-cached,'busybox sh "$SED_DIR"/sed-cached','(__sed_cached_main "$@"); :',sed; bm='SED_LIBMODE=:; . "$SED_DIR"/sed; . "$SED_DIR"/sed-cached; set -- "s/:/_/g;s/a/b/g" /etc/passwd; for i in $HFCNT; do {sed} "$@"; done'; HFCNT="$(seq 1 30)" hyfr -w2 -L sed "$seds" "$bm"
+
+## benchmark: truncating
+# sh=/bin/sh; q0=\?; q1=$q0$q0; q2=$q1$q1; q3=$q2$q2; q4=$q3$q3; q5=$q4$q4; q6=$q5$q5; q7=$q6$q6; str=$(cat /S/sed-bin/par.sed); export q7 str; hyfr -S $sh -L HH '##,#' -L PP '%%,%' '(set -- "$str"; s0=${1{PP}$q7}; s1=${1##"$s0"}; printf %s\\n "-- {PP} {HH} ${#s0} ${#s1}" "$s1")' '(set -- "$str"; s0=${1{HH}$q7}; s1=${1{PP}"$s0"}; printf %s\\n "-- {PP} {HH} ${#s0} ${#s1}" "$s1")'; echo $sh
