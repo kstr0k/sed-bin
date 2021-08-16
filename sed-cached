@@ -49,7 +49,7 @@ __chunk_enc_fs_r4() {
 # encodes chunks from script start, then from end
 # limits the worst effects of quadratic complexity
 __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
-  local i s q0 q1 q2 q3 q4 q5 q6
+  local i s q0 q1 q2 q3 q4 q5 q6 q7
   q0='?'; q1=$q0$q0; q2=$q1$q1; q3=$q2$q2; q4=$q3$q3; q5=$q4$q4; q6=$q5$q5; q7=$q6$q6
   # fetch 1 16char-chunk @arg's start
   if [ ${#1} -gt 16 ]; then
