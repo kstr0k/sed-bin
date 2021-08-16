@@ -45,34 +45,44 @@ __chunk_enc_fs_r4() {
   __chunk_enc_r4 "$@"; _R4_chunk_enc='/C'$_R4_chunk_enc'C/'
 }
 
+__cachename_chunks_aux() { # args: nchunks str
+  i=$1; shift
+  while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
+    i=$(( i - 1 ))
+    if s=$q4 && [ ${#1} -gt ${#s} ]; then
+      # 1=chunk (will be shifted away), 2=rest
+      s=${1#$s}; set -- "${1%%"$s"}" "$s"
+    # else 1=chunk, rest='' (not saved)
+    fi
+    __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
+    _R4_cachename=$_R4_chunk_enc$_R4_cachename
+  done
+}
+
 # hash function for pure shell (needs to be fast)
-# encodes chunks from script start, then from end
+# encodes chunks from script head, then from tail
 # limits the worst effects of quadratic complexity
 __cachename_r4() {  # results (_R4_$function): filename-compatible "hash"
   local i s q0 q1 q2 q3 q4 q5 q6 q7
   q0='?'; q1=$q0$q0; q2=$q1$q1; q3=$q2$q2; q4=$q3$q3; q5=$q4$q4; q6=$q5$q5; q7=$q6$q6
 
-  # fetch 1 16char-chunk @arg's start
-  if s=$q4 && [ ${#1} -gt ${#s} ]; then
-    # $1=chunk (will be shifted away), $2=rest
-    s=${1#$s}; set -- "${1%%"$s"}" "$s"
-  # else $1=chunk, remaining=''
-  fi
-  __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
-  _R4_cachename=$_R4_chunk_enc
+  # TODO: for long inputs, use sed-cached itself (with a short script that doesn't trigger truncation) to truncate...
 
+  _R4_cachename=
+  # fetch some 16char-chunk @arg's head
+  if s=$q7 && [ ${#1} -gt ${#s} ]; then
+    s=${1#$s}; set -- "${1%%"$s"}" "$s"
+  # else rest=''
+  fi
+  __cachename_chunks_aux 8 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
+
+  # tail-truncation significantly slower, but tail "more unique" than head
+  # most scripts are likely shorter and don't reach this
   # fetch some 16char-chunks @arg's tail
-  if s=$q6 && [ ${#1} -gt ${#s} ]; then  # truncate
+  if s=$q6 && [ ${#1} -gt ${#s} ]; then
     s=${1%$s}; set -- "${1##"$s"}"
   fi
-  i=4; while [ $i != 0 ] && [ ${#1} != 0 ]; do  # for each chunk
-    i=$(( i - 1 ))
-    if s=$q4 && [ ${#1} -gt ${#s} ]; then
-      s=${1#$s}; set -- "${1%%"$s"}" "$s"
-    fi
-    __chunk_enc_fs_r4 "$1"; if [ $# = 2 ]; then shift; else set -- ''; fi
-    _R4_cachename=$_R4_chunk_enc$_R4_cachename
-  done
+  __cachename_chunks_aux 4 "$1"
 }
 
 # build new binary, or use cached one if available
