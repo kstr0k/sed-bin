@@ -1,5 +1,9 @@
+# Only use this Makefile from its own folder or via make -C .../sed-bin
+
 objs = address.o operations.o read.o sed-bin.o
-BIN ?= sed-bin
+BIN ?= sed-bin  # must be simple basename, no spaces
+
+all: $(BIN)
 
 $(BIN): $(objs)
 	@# the line below is implicit with GNU make, add it for BSD compatibility
@@ -7,7 +11,7 @@ $(BIN): $(objs)
 
 sed-bin.o: generated.c generated-init.c
 
-.PHONY: clean
+.PHONY: clean all
 
 clean:
 	rm -f *.o $(BIN)
