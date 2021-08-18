@@ -20,7 +20,15 @@ generated.c: generated-init.c
 generate: user.sed $(SED_TRANSLATOR)
 	$(SED_TRANSLATOR_SED) $(SED_TRANSLATOR) <user.sed >generated.c
 
-.PHONY: clean all
+par.sed.bin: par.sed selfbuild $(BIN)
+	mv $(BIN) $@
+	@# only user should create it
+	rm -f user.sed
+
+selfbuild: par.sed
+	cp par.sed user.sed
+
+.PHONY: clean all selfbuild
 
 clean:
-	rm -f *.o $(BIN) generated-init.c generated.c user.sed
+	rm -f *.o $(BIN) generated-init.c generated.c user.sed par.sed.bin
