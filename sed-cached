@@ -90,7 +90,7 @@ __sed_cached_make() {  # args: script
   __cachename_r4 "$1"
   _R4_cachename=$SED_CACHE_DIR/bin/${#1}/c3/$_R4_cachename
   [ -d "$_R4_cachename" ] || mkdir -p "$_R4_cachename"  # TODO: lock etc
-  local sfile bfile oldbin="$bin"
+  local sfile bfile
   sfile=$_R4_cachename/s1.sed  # TODO; counter
   bfile=$_R4_cachename/s1.bin
   bin=$bfile  # counts on this function NOT being subshell-ed
@@ -98,8 +98,9 @@ __sed_cached_make() {  # args: script
   if ! [ -r "$sfile" ] || ! [ -r "$bfile" ] || ! { printf '%s' "$1" | cmp >/dev/null 2>&1 "$sfile" -; }; then
     printf '%s' "$1" >"$sfile"  # save script
     __sed_default_make "$1"     # compile
-    mv "$oldbin" "$bin"         # save binary
   fi
+  [ -z "${SED_BIN:-}" ] ||      # save to specific location if requested
+    cp "$bin" "$SED_BIN"
 }
 
 # replace _make hook, invoke `sed` script
